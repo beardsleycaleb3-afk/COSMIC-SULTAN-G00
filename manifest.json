@@ -1,0 +1,17 @@
+{
+  "name": "Sultan Sovereign",
+  "short_name": "Sovereign",
+  "description": "Mirror containment monitor and particle forge.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#ff6600",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://fonts.gstatic.com/s/i/materialiconsoutlined/settings_input_component/v1/24px.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
