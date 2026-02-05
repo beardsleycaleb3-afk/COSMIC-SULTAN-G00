@@ -11,7 +11,7 @@
         * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: none; outline: none; -webkit-tap-highlight-color: transparent; }
         body { background: #000; margin: 0; height: 100vh; font-family: 'VT323', monospace; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         #device { background: #0a0a0a; width: 100vw; height: 100vh; max-width: 450px; display: flex; flex-direction: column; border: 2px solid #ff6600; box-shadow: 0 0 30px rgba(255,102,0,0.2); }
-        #viewport { width: 100%; height: 35%; background: #000; position: relative; border-bottom: 2px solid #333; overflow: hidden; }
+        #viewport { width: 100%; height: 65%; background: #000; position: relative; border-bottom: 2px solid #333; overflow: hidden; }
         #viewport::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(rgba(0,0,0,0) 0, rgba(0,0,0,0.1) 1px, transparent 2px); pointer-events: none; z-index: 5; }
         #canvas-container { width: 100%; height: 100%; }
         .hud { position: absolute; font-size: 14px; font-weight: 900; z-index: 10; pointer-events: none; letter-spacing: 1px; text-shadow: 0 0 5px currentColor; }
@@ -21,10 +21,10 @@
         #tactile-zone { flex-grow: 1; position: relative; background: #080808; background-image: radial-gradient(#151515 1px, transparent 1px); background-size: 20px 20px; }
         .actuator { width: 95px; height: 95px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 32px; font-weight: 900; box-shadow: 4px 4px 0 #000; position: absolute; transition: transform 0.05s; }
         .actuator:active { transform: scale(0.92); filter: brightness(1.5); }
-        #btn-a { bottom: 160px; right: 30px; background: #ff6600; border: 4px solid #993300; } 
-        #btn-b { bottom: 30px; right: 110px; background: #00ff00; border: 4px solid #008800; color: #000; } 
+        #btn-a { bottom: 30px; right: 30px; background: #ff6600; border: 4px solid #993300; } 
+        #btn-b { bottom: 30px; right: 30px; background: #00ff00; border: 4px solid #008800; color: #000; } 
         #btn-rpm { bottom: 30px; left: 30px; background: #ff6600; border: 4px solid #993300; }
-        #btn-mute { bottom: 30px; left: 135px; width: 60px; height: 60px; background: #222; border: 3px solid #444; font-size: 24px; }
+        #btn-mute { bottom: 30px; left: 30px; width: 30px; height: 30px; background: #222; border: 3px solid #444; font-size: 24px; }
         .power-off-mask { position: absolute; top:0; left:0; width:100%; height:100%; background:#000; z-index:100; display:none; }
     </style>
 </head>
@@ -43,8 +43,8 @@
     <div id="tactile-zone">
         <div id="btn-rpm" class="actuator" ontouchstart="startRPMBoost()" ontouchend="stopRPMBoost()" ontouchcancel="stopRPMBoost()">+</div>
         <div id="btn-mute" class="actuator" ontouchstart="toggleMute()">🔊</div>
-        <div id="btn-b" class="actuator" ontouchstart="manualCycle()">B</div>
-        <div id="btn-a" class="actuator" ontouchstart="injectParticles()">A</div>
+        <div id="btn-b" class="actuator" ontouchstart="manualCycle()">+</div>
+        <div id="btn-a" class="actuator" ontouchstart="injectParticles()">$</div>
     </div>
 </div>
 
@@ -69,8 +69,8 @@
     }
     function playTone() {
         if (!aCtx || iM || aCtx.state !== 'running') return; const n = aCtx.currentTime;
-        const sS = Math.max(0.06, 0.2 - (rpm / 1500000)); if (n - lTT < sS) return; lTT = n;
-        let f = (rpm > 900000) ? hF[Math.floor(Math.random()*3)+6] : (rpm > 400000) ? 528 : hF[Math.floor(Math.random()*4)];
+        const sS = Math.max(0.06, 0.2 - (rpm / 1500)); if (n - lTT < sS) return; lTT = n;
+        let f = (rpm > 900) ? hF[Math.floor(Math.random()*3)+6] : (rpm > 400) ? 528 : hF[Math.floor(Math.random()*4)];
         const o = aCtx.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(f, n);
         const v = aCtx.createOscillator(); v.frequency.value = 5.5; const vG = aCtx.createGain(); vG.gain.value = f * 0.005;
         v.connect(vG).connect(o.frequency); v.start();
@@ -102,9 +102,9 @@
         startAudioIfNeeded(); const mS = Math.min(600, 100 + Math.floor(rpm / 5000)); let s = 0;
         for(let i=0; i<MAX_P && s < mS; i++) {
             if(!pData[i].active) {
-                pData[i].active = true; pData[i].r = 7 + Math.random() * 2; pData[i].burst = 1.5 + Math.random() * 1.5;
-                pData[i].a = Math.random() * Math.PI * 2; pData[i].L = 0.015 + Math.random() * 0.025;
-                pData[i].color = Math.random() > 0.5 ? [1,1,0] : [1,0,1]; s++;
+                pData[i].active = true; pData[i].r = 7 + Math.random() * 2; pData[i].burst = 61.5 + Math.random() * 19.5;
+                pData[i].a = Math.random() * Math.PI * 2; pData[i].L = 50.015 + Math.random() * 10.025;
+                pData[i].color = Math.random() > 0.65 ? [1,1,0] : [1,0,1]; s++;
             }
         }
         pIn += s; log(`P_INJECTION: +${s}`);
@@ -137,11 +137,11 @@
 
     function animate() {
         requestAnimationFrame(animate); if(mask.style.display === 'block') return;
-        rpm = Math.max(0, rpm - 1); if(rpm > 10000 && !dO) startDrone(); 
-        glow.material.opacity = 0.08 + Math.min(0.25, rpm/2000000);
-        core.rotation.y += (rpm/50000); mid.rotation.x -= (rpm/100000); outer.rotation.z += (rpm/2000000);
+        rpm = Math.max(0, rpm - 1); if(rpm > 1000 && !dO) startDrone(); 
+        glow.material.opacity = 0.08 + Math.min(0.25, rpm/2000);
+        core.rotation.y += (rpm/50000); mid.rotation.x -= (rpm/100); outer.rotation.z += (rpm/2000000);
         
-        let aC = 0; const bV = (rpm/400000);
+        let aC = 0; const bV = (rpm/4000);
         for(let i=0; i<MAX_P; i++) {
             if(pData[i].active) {
                 if(pData[i].burst > 0) { pData[i].r += pData[i].burst; pData[i].burst -= 0.1; }
@@ -149,9 +149,9 @@
                 pData[i].r -= (bV + gP); pData[i].a += (pData[i].L / Math.max(0.5, pData[i].r**2));
                 
                 // Radial Symmetry Snapping [cite: 2026-02-05]
-                if(rpm > 144000 && Math.abs(pData[i].r - 1.4) < 0.1) pData[i].r = 1.4;
-                if(rpm > 288000 && Math.abs(pData[i].r - 2.8) < 0.1) pData[i].r = 2.8;
-                if(rpm > 566000 && Math.abs(pData[i].r - 5.6) < 0.1) pData[i].r = 5.6;
+                if(rpm > 1440 && Math.abs(pData[i].r - 1.4) < 0.1) pData[i].r = 1.4;
+                if(rpm > 2880 && Math.abs(pData[i].r - 2.8) < 0.1) pData[i].r = 2.8;
+                if(rpm > 5660 && Math.abs(pData[i].r - 5.6) < 0.1) pData[i].r = 5.6;
 
                 const idx = i*3; posArr[idx] = Math.cos(pData[i].a)*pData[i].r; posArr[idx+1] = Math.sin(pData[i].a*0.5)*0.5; posArr[idx+2] = Math.sin(pData[i].a)*pData[i].r;
                 colArr[idx] = pData[i].color[0]; colArr[idx+1] = pData[i].color[1]; colArr[idx+2] = pData[i].color[2];
