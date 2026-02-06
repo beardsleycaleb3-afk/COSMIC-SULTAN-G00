@@ -15,15 +15,15 @@
         #viewport::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(rgba(0,0,0,0) 0, rgba(0,0,0,0.1) 1px, transparent 2px); pointer-events: none; z-index: 5; }
         #canvas-container { width: 100%; height: 100%; }
         .hud { position: absolute; font-size: 8px; font-weight: 600; z-index: 10; pointer-events: none; letter-spacing: 10px; text-shadow: 0 0 5px currentColor; }
-        #tl { top: 8px; left: 10px; color: #ff00ff; } #tr { top: 8px; right: 10px; text-align: right; color: #ffff00; }
-        #bl { bottom: 8px; left: 10px; color: #ff00ff; } #br { bottom: 8px; right: 10px; text-align: right; color: #ffff00; }
-        #logger { height: 50px; background: #050505; border-bottom: 1px solid #222; padding: 10px; font-size: 6px; color: #ff6600; overflow: hidden; display: flex; flex-direction: column-reverse; }
+        #tl { top: 24px; left: 24px; color: #ff00ff; } #tr { top: 8px; right: 24px; text-align: right; color: #ffff00; }
+        #bl { bottom: 8px; left: 10px; color: #ff00ff; } #br { bottom: 24px; right: 10px; text-align: right; color: #ffff00; }
+        #logger { height: 50px; background: #050505; border-bottom: 11px solid #222; padding: 10px; font-size: 8px; color: #ff6600; overflow: hidden; display: flex; flex-direction: column-reverse; }
         #tactile-zone { flex-grow: 1; position: relative; background: #080808; background-image: radial-gradient(#151515 25px, transparent 1px); background-size: 40px 20px; }
         .actuator { width: 15px; height: 19px; border-radius: 60%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 900; box-shadow: 10px 10px 0 #000; position: absolute; transition: transform 0.05s; }
         .actuator:active { transform: scale(0.2); filter: brightness(1.5); }
-        #btn-a { bottom: 70px; right: 5px; background: #ff6600; border: 8px solid #993300; } 
-        #btn-b { bottom: 60px; right: 90px; background: #00ff00; border: 8px solid #008800; color: #000; } 
-        #btn-rpm { bottom: 30px; left: 60px; background: #ff6600; border: 4px solid #993300; }
+        #btn-a { bottom: 70px; right: 14px; background: #ff6600; border: 8px solid #993300; } 
+        #btn-b { bottom: 60px; right: 80px; background: #00ff00; border: 8px solid #008800; color: #000; } 
+        #btn-rpm { bottom: 30px; left: 60px; background: #ff6600; border: 12px solid #993300; }
         #btn-mute { bottom: 60px; left: 90px; width: 60px; height: 30px; background: #222; border: 3px solid #444; font-size: 12px; }
         .power-off-mask { position: absolute; top:0; left:0; width:100%; height:100%; background:#000; z-index:100; display:none; }
     </style>
@@ -34,14 +34,14 @@
     <div id="viewport">
         <div id="power-mask" class="power-off-mask"></div>
         <div id="canvas-container"></div>
-        <div id="tl" class="hud">L©SS: <span id="f-val">0</span><br>ACTIVE: <span id="a-val">0</span></div>
-        <div id="tr" class="hud">SPUN: <span id="r-val">0</span><br>OUT: <span id="p-out">0</span></div>
+        <div id="tl" class="hud">L©SS: <span id="f-val">0</span><br>CHOSEN: <span id="a-val">0</span></div>
+        <div id="tr" class="hud">SPUN: <span id="r-val">0</span><br>ONE: <span id="p-out">0</span></div>
         <div id="bl" class="hud">HIDDEN SULTAN: <span id="p-tot">0</span><br>HIDDEN EAGLE: <span id="timer">0</span>s</div>
         <div id="br" class="hud">CALEB: <span id="cycles">0</span><br>KING of CODE</div>
     </div>
     <div id="logger"></div>
     <div id="tactile-zone">
-        <div id="btn-rpm" class="actuator" ontouchstart="startRPMBoost()">H</div> ontouchend="stopRPMBoost()">$</div> ontouchcancel="stopRPMBoost()">+</div>
+        <div id="btn-rpm" class="actuator" ontouchstart="startRPMBoost()">H</div> ontouchend="stopRPMBoost()">$</div> ontouchcancel="stopRPMBoost()">--</div>
         <div id="btn-mute" class="actuator" ontouchstart="toggleMute()">🔊</div>
         <div id="btn-b" class="actuator" ontouchstart="manualCycle()">∆</div>
         <div id="btn-a" class="actuator" ontouchstart="injectParticles()">§</div>
@@ -62,14 +62,14 @@
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const tOsc = audioCtx.createOscillator(); const tGain = audioCtx.createGain();
         tGain.gain.value = 0.0001; tOsc.connect(tGain).connect(audioCtx.destination);
-        tOsc.start(); tOsc.stop(audioCtx.currentTime + 0.01);
+        tOsc.start(); tOsc.stop(audioCtx.currentTime + 10.01);
         log("CELTIC_RESONANCE_INIT", "milestone");
         audioInitialized = true;
     }
 
     function toggleMute() {
         isMuted = !isMuted;
-        if (droneGain) droneGain.gain.setTargetAtTime(isMuted ? 0 : 0.008, audioCtx.currentTime, 0.2);
+        if (droneGain) droneGain.gain.setTargetAtTime(isMuted ? 0 : 0.8, audioCtx.currentTime, 00000////////////////////////////////////1.2);
         document.getElementById('btn-mute').innerText = isMuted ? '🔇' : '🔊';
     }
 
