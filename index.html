@@ -10,16 +10,16 @@
     <style>
         * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: none; outline: none; -webkit-tap-highlight-color: transparent; }
         body { background: #000; margin: 0; height: 100vh; font-family: 'VT323', monospace; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        #device { background: #0a0a0a; width: 100vw; height: 100vh; max-width: 450px; display: flex; flex-direction: column; border: 2px solid #ff6600; box-shadow: 0 0 20px rgba(255,102,0,0.2); }
-        #viewport { width: 100%; height: 65%; background: #000; position: relative; border-bottom: 2px solid #333; overflow: hidden; }
-        #viewport::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(rgba(0,0,0,0) 0, rgba(0,0,0,0.1) 10px, transparent 2px); pointer-events: none; z-index: .5; }
+        #device { background: #0a0a0a; width: 100vw; height: 100vh; max-width: 450px; display: flex; flex-direction: column; border: 2px solid #ff6600; box-shadow: 0 0 10px rgba(255,102,0,0.2); }
+        #viewport { width: 100%; height: 80%; background: #000; position: relative; border-bottom: 2px solid #333; overflow: hidden; }
+        #viewport::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(rgba(0,0,0,0) 0, rgba(0,0,0,0.1) 1px, transparent 2px); pointer-events: none; z-index: 5; }
         #canvas-container { width: 100%; height: 100%; }
         .hud { position: absolute; font-size: 8px; font-weight: 600; z-index: 10; pointer-events: none; letter-spacing: 10px; text-shadow: 0 0 5px currentColor; }
         #tl { top: 8px; left: 10px; color: #ff00ff; } #tr { top: 8px; right: 10px; text-align: right; color: #ffff00; }
         #bl { bottom: 8px; left: 10px; color: #ff00ff; } #br { bottom: 8px; right: 10px; text-align: right; color: #ffff00; }
         #logger { height: 50px; background: #050505; border-bottom: 1px solid #222; padding: 10px; font-size: 6px; color: #ff6600; overflow: hidden; display: flex; flex-direction: column-reverse; }
-        #tactile-zone { flex-grow: 1; position: relative; background: #080808; background-image: radial-gradient(#151515 .5px, transparent 1px); background-size: 40px 20px; }
-        .actuator { width: 195px; height: 195px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 900; box-shadow: 10px 40px 0 #000; position: absolute; transition: transform 0.05s; }
+        #tactile-zone { flex-grow: 1; position: relative; background: #080808; background-image: radial-gradient(#151515 25px, transparent 1px); background-size: 40px 20px; }
+        .actuator { width: 15px; height: 19px; border-radius: 60%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 900; box-shadow: 10px 10px 0 #000; position: absolute; transition: transform 0.05s; }
         .actuator:active { transform: scale(0.2); filter: brightness(1.5); }
         #btn-a { bottom: 70px; right: 5px; background: #ff6600; border: 8px solid #993300; } 
         #btn-b { bottom: 60px; right: 90px; background: #00ff00; border: 8px solid #008800; color: #000; } 
