@@ -12,16 +12,16 @@
         body { background: #000; margin: 0; height: 100vh; font-family: 'VT323', monospace; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         #device { background: #0a0a0a; width: 100vw; height: 100vh; max-width: 450px; display: flex; flex-direction: column; border: 2px solid #ff6600; box-shadow: 0 0 20px rgba(255,102,0,0.2); }
         #viewport { width: 100%; height: 65%; background: #000; position: relative; border-bottom: 2px solid #333; overflow: hidden; }
-        #viewport::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(rgba(0,0,0,0) 0, rgba(0,0,0,0.1) 1px, transparent 2px); pointer-events: none; z-index: 5; }
+        #viewport::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(rgba(0,0,0,0) 0, rgba(0,0,0,0.1) 10px, transparent 2px); pointer-events: none; z-index: .5; }
         #canvas-container { width: 100%; height: 100%; }
-        .hud { position: absolute; font-size: 14px; font-weight: 900; z-index: 10; pointer-events: none; letter-spacing: 1px; text-shadow: 0 0 5px currentColor; }
+        .hud { position: absolute; font-size: 8px; font-weight: 600; z-index: 10; pointer-events: none; letter-spacing: 10px; text-shadow: 0 0 5px currentColor; }
         #tl { top: 8px; left: 10px; color: #ff00ff; } #tr { top: 8px; right: 10px; text-align: right; color: #ffff00; }
         #bl { bottom: 8px; left: 10px; color: #ff00ff; } #br { bottom: 8px; right: 10px; text-align: right; color: #ffff00; }
-        #logger { height: 50px; background: #050505; border-bottom: 1px solid #222; padding: 10px; font-size: 13px; color: #ff6600; overflow: hidden; display: flex; flex-direction: column-reverse; }
-        #tactile-zone { flex-grow: 1; position: relative; background: #080808; background-image: radial-gradient(#151515 1px, transparent 1px); background-size: 20px 20px; }
-        .actuator { width: 95px; height: 95px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 32px; font-weight: 900; box-shadow: 4px 4px 0 #000; position: absolute; transition: transform 0.05s; }
-        .actuator:active { transform: scale(0.92); filter: brightness(1.5); }
-        #btn-a { bottom: 90px; right: 30px; background: #ff6600; border: 4px solid #993300; } 
+        #logger { height: 50px; background: #050505; border-bottom: 1px solid #222; padding: 10px; font-size: 6px; color: #ff6600; overflow: hidden; display: flex; flex-direction: column-reverse; }
+        #tactile-zone { flex-grow: 1; position: relative; background: #080808; background-image: radial-gradient(#151515 .5px, transparent 1px); background-size: 40px 20px; }
+        .actuator { width: 195px; height: 195px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 900; box-shadow: 10px 40px 0 #000; position: absolute; transition: transform 0.05s; }
+        .actuator:active { transform: scale(0.2); filter: brightness(1.5); }
+        #btn-a { bottom: 70px; right: 5px; background: #ff6600; border: 8px solid #993300; } 
         #btn-b { bottom: 60px; right: 90px; background: #00ff00; border: 8px solid #008800; color: #000; } 
         #btn-rpm { bottom: 30px; left: 60px; background: #ff6600; border: 4px solid #993300; }
         #btn-mute { bottom: 60px; left: 90px; width: 60px; height: 30px; background: #222; border: 3px solid #444; font-size: 12px; }
@@ -34,17 +34,17 @@
     <div id="viewport">
         <div id="power-mask" class="power-off-mask"></div>
         <div id="canvas-container"></div>
-        <div id="tl" class="hud">FPS: <span id="f-val">0</span><br>ACTIVE: <span id="a-val">0</span></div>
-        <div id="tr" class="hud">RPM: <span id="r-val">0</span><br>OUT: <span id="p-out">0</span></div>
-        <div id="bl" class="hud">Σ MASS: <span id="p-tot">0</span><br>CYCLE: <span id="timer">0</span>s</div>
-        <div id="br" class="hud">SURVIVAL: <span id="cycles">0</span><br>MIRROR: ACTIVE</div>
+        <div id="tl" class="hud">L©SS: <span id="f-val">0</span><br>ACTIVE: <span id="a-val">0</span></div>
+        <div id="tr" class="hud">SPUN: <span id="r-val">0</span><br>OUT: <span id="p-out">0</span></div>
+        <div id="bl" class="hud">HIDDEN SULTAN: <span id="p-tot">0</span><br>HIDDEN EAGLE: <span id="timer">0</span>s</div>
+        <div id="br" class="hud">CALEB: <span id="cycles">0</span><br>KING of CODE</div>
     </div>
     <div id="logger"></div>
     <div id="tactile-zone">
-        <div id="btn-rpm" class="actuator" ontouchstart="startRPMBoost()" ontouchend="stopRPMBoost()" ontouchcancel="stopRPMBoost()">+</div>
+        <div id="btn-rpm" class="actuator" ontouchstart="startRPMBoost()">H</div> ontouchend="stopRPMBoost()">$</div> ontouchcancel="stopRPMBoost()">+</div>
         <div id="btn-mute" class="actuator" ontouchstart="toggleMute()">🔊</div>
-        <div id="btn-b" class="actuator" ontouchstart="manualCycle()">B</div>
-        <div id="btn-a" class="actuator" ontouchstart="injectParticles()">A</div>
+        <div id="btn-b" class="actuator" ontouchstart="manualCycle()">∆</div>
+        <div id="btn-a" class="actuator" ontouchstart="injectParticles()">§</div>
     </div>
 </div>
 
