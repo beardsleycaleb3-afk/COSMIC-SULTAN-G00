@@ -2,246 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SULTAN 47 | GLYPH PHYSICS + AUDIO v14-4</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sphere Evolution Index</title>
     <style>
-        * { touch-action: none; -webkit-user-select: none; user-select: none; }
-        body, html { 
-            margin: 0; padding: 0; background: #000; overflow: hidden; height: 100vh; width: 100vw; 
-            font-family: 'Courier New', monospace; color: #0f0; 
-        }
-        canvas { position: absolute; inset: 0; }
-        #hud { position: absolute; top: 10px; left: 10px; color: #d4af37; font-size: 12px; z-index: 10; }
-        #glyph-key { position: absolute; bottom: 10px; right: 10px; color: #0ff; font-size: 9px; max-width: 220px; }
-        .btn-grid { position: absolute; bottom: 10px; left: 10px; display: grid; grid-template-columns: repeat(3, 55px); gap: 8px; z-index: 10; }
-        button { 
-            background: rgba(0,20,0,0.9); border: 1px solid #0f0; color: #0f0; border-radius: 4px; 
-            font-size: 10px; padding: 4px; font-family: monospace;
-        }
-        button:active { background: #0f0; color: #000; }
-        #audio-status { position: absolute; top: 50px; left: 10px; font-size: 10px; color: #ff0; }
+        body { font-family: sans-serif; background: #1a1a1a; color: #e0e0e0; line-height: 1.6; padding: 20px; }
+        header { border-bottom: 2px solid #444; padding-bottom: 20px; margin-bottom: 30px; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .sphere-card { background: #2a2a2a; border-radius: 8px; padding: 20px; border-left: 5px solid #007bff; }
+        .ratio { font-size: 1.5rem; color: #007bff; font-weight: bold; }
+        ul { list-style: none; padding-left: 0; }
+        li { background: #333; margin: 5px 0; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem; }
+        .evolution-tag { font-weight: bold; color: #ffcc00; margin-right: 10px; }
     </style>
 </head>
 <body>
-    <div id="hud">
-        OPS: <span id="ops">0</span> | GLYPHS: <span id="glyphs">0</span> | F-STATE: <span id="fstate">1F</span>
-    </div>
-    <div id="audio-status">AUDIO: LOCKED</div>
-    <div id="glyph-key">
-        o00o=mirror | 1F×1F=2F | 1ZXX=Z-field<br>
-        <span id="audio-hint">Tap glyphs → hear Sultan 47</span><br>
-        3000:1 compression | 1590 ops/frame ✓
-    </div>
-    
-    <div class="btn-grid">
-        <button onclick="inject('o00o')">o00o</button>
-        <button onclick="inject('1F')">1F</button>
-        <button onclick="inject('1ZXX')">1ZXX</button>
-        <button onclick="inject('1XX')">1XX</button>
-        <button onclick="inject('1YY')">1YY</button>
-        <button onclick="toggleMirror()">MIRROR</button>
-        <button onclick="unlockAudio()" style="grid-column: span 3; font-size: 9px;">🔊 UNLOCK AUDIO</button>
-    </div>
-    
-    <canvas id="glyph-canvas"></canvas>
 
-    <audio id="sultanTrack" crossorigin="anonymous" preload="auto" loop style="display: none;">
-        <source src="Coded-sultan-1.mp3" type="audio/mpeg">
-    </audio>
+    <header>
+        <h1>System of Spheres</h1>
+        <p>Documenting the Seven Evolutions of the Primary, Secondary, and Tertiary Spheres.</p>
+    </header>
 
-    <script>
-        // === SULTAN 47 GLYPH PHYSICS + AUDIO ECOSYSTEM ===
-        // Patent #14-4 | 1F×1F=2F | 60fps mobile | Coded Sultan integration
-        
-        const canvas = document.getElementById('glyph-canvas');
-        const ctx = canvas.getContext('2d');
-        let glyphs = [], ops = 0, totalGlyphs = 0, fState = 1;
-        let mirrorActive = false, mirrorCenter = {x: 0.5, y: 0.5};
-        let tick = 0, audioUnlocked = false;
-        
-        // HIGH-OUTPUT AUDIO KERNEL (Your code)
-        let aCtx = null, dO = null, dG = null, lTT = 0, iM = false;
-        let sultanTrack, hF = [110,123,131,139,147,156,165,175,185,196,208,220,233,247,262,277,294,311,330,349,370,392,415,440];
-        
-        // GLYPH ALGEBRA (Patent rules)
-        const GLYPHS = {
-            'o00o': { shape: 'circle', energy: 0, mirror: true, color: '#d4af37', freq: 174 },
-            '1F': { shape: 'line', energy: 1, mirror: false, color: '#0f0', freq: 261 },
-            '1ZXX': { shape: 'cross', energy: 3, mirror: true, color: '#00f', freq: 440 },
-            '1XX': { shape: 'hbar', energy: 2, mirror: false, color: '#0ff', freq: 330 },
-            '1YY': { shape: 'vbar', energy: 2, mirror: false, color: '#ff0', freq: 392 }
-        };
-        
-        function unlockAudio() {
-            sultanTrack = document.getElementById('sultanTrack');
-            sultanTrack.play().catch(() => {});
-            if (!aCtx) aCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (aCtx.state === 'suspended') aCtx.resume();
-            startDrone();
-            audioUnlocked = true;
-            document.getElementById('audio-status').innerText = 'AUDIO: LIVE';
-            document.getElementById('audio-hint').innerText = '1F×1F=2F → AUDIO BEAT';
-        }
-        
-        function startDrone() {
-            if (dO || !aCtx) return;
-            dO = aCtx.createOscillator(); dO.type = 'sine'; 
-            dO.frequency.setValueAtTime(174, aCtx.currentTime);
-            dG = aCtx.createGain(); dG.gain.setValueAtTime(0, aCtx.currentTime);
-            dG.gain.linearRampToValueAtTime(iM ? 0 : 0.02, aCtx.currentTime + 1.5);
-            dO.connect(dG).connect(aCtx.destination); dO.start();
-        }
-        
-        function glyphTone(glyph) {
-            if (!audioUnlocked || !aCtx || iM || aCtx.state !== 'running') return;
-            const n = aCtx.currentTime;
-            const f = glyph.freq || hF[Math.floor(Math.random()*8)];
-            
-            const o = aCtx.createOscillator(); o.type = 'square';
-            o.frequency.setValueAtTime(f, n);
-            
-            const fF = aCtx.createBiquadFilter(); fF.type = 'lowpass'; fF.frequency.value = f * 1.3;
-            const mG = aCtx.createGain();
-            mG.gain.setValueAtTime(0, n);
-            mG.gain.linearRampToValueAtTime(0.18, n + 0.02);
-            mG.gain.exponentialRampToValueAtTime(0.0001, n + 0.6);
-            
-            o.connect(fF).connect(mG).connect(aCtx.destination);
-            o.start(n); o.stop(n + 0.6);
-            
-            // Duck background track
-            sultanTrack.volume = 0.3;
-            setTimeout(() => sultanTrack.volume = 0.7, 150);
-        }
-        
-        function init() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            mirrorCenter = { x: canvas.width/2, y: canvas.height/2 };
-            loop();
-        }
-        
-        function inject(glyphId) {
-            const glyph = { ...GLYPHS[glyphId] };
-            glyph.x = Math.random() * canvas.width;
-            glyph.y = Math.random() * canvas.height;
-            glyph.vx = (Math.random() - 0.5) * 3;
-            glyph.vy = (Math.random() - 0.5) * 3;
-            glyph.life = 240 + Math.random() * 120;
-            glyphs.push(glyph);
-            totalGlyphs++;
-            glyphTone(glyph); // IMMEDIATE AUDIO FEEDBACK
-            
-            // 1F×1F=2F ALGEBRA (Your patent core)
-            if (glyphs.length > 1 && glyph.energy === 1) {
-                const nearby = glyphs[glyphs.length-2];
-                if (nearby.energy === 1) {
-                    const product = { glyph: '2F', energy: 2, color: '#ffaa00', shape: 'hbar', freq: 330 };
-                    glyphs[glyphs.length-2] = product;
-                    glyphs.pop();
-                    fState = 2;
-                    glyphTone(product); // 2F TONE
-                }
-            }
-            
-            document.getElementById('fstate').textContent = fState + 'F';
-        }
-        
-        function toggleMirror() {
-            mirrorActive = !mirrorActive;
-            glyphTone(GLYPHS['o00o']);
-        }
-        
-        function applyMirror(glyph) {
-            if (!mirrorActive) return glyph;
-            const dx = glyph.x - mirrorCenter.x;
-            const dy = glyph.y - mirrorCenter.y;
-            glyph.x = mirrorCenter.x - dx;
-            glyph.y = mirrorCenter.y - dy;
-            
-            // 1ZXX → Z-FIELD (Patent rule)
-            if (glyph.energy === 3) {
-                glyphs.push({
-                    x: mirrorCenter.x, y: mirrorCenter.y, shape: 'zfield',
-                    energy: 4, color: '#f0f', life: 90, freq: 440, vx: 0, vy: 0
-                });
-                glyphTone({freq: 440});
-            }
-            return glyph;
-        }
-        
-        function loop() {
-            requestAnimationFrame(loop);
-            ops = 0;
-            
-            // FADE + GRID (Patent efficiency)
-            ctx.fillStyle = 'rgba(0,0,0,0.12)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // o00o MIRROR LINE
-            if (mirrorActive) {
-                ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 2;
-                ctx.setLineDash([8, 8]);
-                ctx.beginPath();
-                ctx.moveTo(0, mirrorCenter.y);
-                ctx.lineTo(canvas.width, mirrorCenter.y);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            }
-            
-            // GLYPHS (1590 ops/frame target)
-            for (let i = glyphs.length - 1; i >= 0; i--) {
-                const g = glyphs[i];
-                g.x += g.vx; g.y += g.vy;
-                g.life--;
-                g.vx *= 0.97; g.vy *= 0.97;
-                
-                if (g.x < 0 || g.x > canvas.width) g.vx *= -1;
-                if (g.y < 0 || g.y > canvas.height) g.vy *= -1;
-                applyMirror(g);
-                
-                // RENDER (Your glyph shapes)
-                ctx.save();
-                ctx.translate(g.x, g.y);
-                ctx.globalAlpha = g.life / 300;
-                ctx.fillStyle = g.color;
-                ctx.shadowColor = g.color; ctx.shadowBlur = 12;
-                
-                switch(g.shape) {
-                    case 'circle': ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.fill(); break;
-                    case 'line': ctx.fillRect(-15,-2,30,4); break;
-                    case 'cross': 
-                        ctx.fillRect(-18,-2,36,4);
-                        ctx.fillRect(-2,-18,4,36); break;
-                    case 'hbar': ctx.fillRect(-25,-4,50,8); break;
-                    case 'vbar': ctx.fillRect(-4,-25,8,50); break;
-                    case 'zfield':
-                        ctx.strokeStyle = g.color; ctx.lineWidth = 3;
-                        ctx.beginPath(); ctx.arc(0,0,25,0,Math.PI*2); ctx.stroke(); break;
-                }
-                ctx.restore();
-                ops += 28;
-                
-                if (g.life <= 0) glyphs.splice(i, 1);
-            }
-            
-            document.getElementById('ops').textContent = ops;
-            document.getElementById('glyphs').textContent = glyphs.length;
-            tick++;
-        }
-        
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            mirrorCenter = { x: canvas.width/2, y: canvas.height/2 };
-        });
-        
-        init();
-        
-        // AUTO-DEMO: Watch 1F×1F=2F + AUDIO
-        setInterval(() => {
-            if (Math.random() < 0.4 && audioUnlocked) inject('1F');
-        }, 600);
-    </script>
+    <div class="grid-container">
+        <div class="sphere-card">
+            <h2>Primary Sphere</h2>
+            <div class="ratio">14 : 4</div>
+            <p>Phase Baseline</p>
+            <ul id="sphere-1-list">
+                <li><span class="evolution-tag">E1</span> Base Configuration</li>
+                <li><span class="evolution-tag">E2</span> ...</li>
+                <li><span class="evolution-tag">E3</span> ...</li>
+                <li><span class="evolution-tag">E4</span> ...</li>
+                <li><span class="evolution-tag">E5</span> ...</li>
+                <li><span class="evolution-tag">E6</span> ...</li>
+                <li><span class="evolution-tag">E7</span> Final State</li>
+            </ul>
+        </div>
+
+        <div class="sphere-card" style="border-left-color: #28a745;">
+            <h2>Secondary Sphere</h2>
+            <div class="ratio">28 : 8</div>
+            <p>Harmonic Extension</p>
+            <ul id="sphere-2-list">
+                <li><span class="evolution-tag">E1</span> Scaled Configuration</li>
+                <li><span class="evolution-tag">E2</span> ...</li>
+                <li><span class="evolution-tag">E3</span> ...</li>
+                <li><span class="evolution-tag">E4</span> ...</li>
+                <li><span class="evolution-tag">E5</span> ...</li>
+                <li><span class="evolution-tag">E6</span> ...</li>
+                <li><span class="evolution-tag">E7</span> Final State</li>
+            </ul>
+        </div>
+
+        <div class="sphere-card" style="border-left-color: #dc3545;">
+            <h2>Tertiary Sphere</h2>
+            <div class="ratio">56 : 16</div>
+            <p>Maximum Complexity</p>
+            <ul id="sphere-3-list">
+                <li><span class="evolution-tag">E1</span> Absolute Expansion</li>
+                <li><span class="evolution-tag">E2</span> ...</li>
+                <li><span class="evolution-tag">E3</span> ...</li>
+                <li><span class="evolution-tag">E4</span> ...</li>
+                <li><span class="evolution-tag">E5</span> ...</li>
+                <li><span class="evolution-tag">E6</span> ...</li>
+                <li><span class="evolution-tag">E7</span> Final State</li>
+            </ul>
+        </div>
+    </div>
+
 </body>
 </html>
