@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SULTAN SOVEREIGN 1.6.2</title>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: black; color: white; font-family: Arial, sans-serif; }
+        canvas { display: block; }
+        .actuator { position: absolute; width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 50%; text-align: center; line-height: 50px; font-size: 24px; cursor: pointer; }
+        #btn-rpm { bottom: 20px; left: 50%; transform: translateX(-50%); }
+        #btn-mute { top: 20px; right: 20px; }
+        #btn-cycle { bottom: 20px; right: 20px; }
+        #btn-inject { bottom: 20px; left: 20px; }
+        #btn-master { top: 20px; left: 50%; transform: translateX(-50%); }
+        #btn-mode { top: 20px; left: 20px; }
+        .settings-tab { position: absolute; top: 60px; left: 20px; padding: 10px; background: rgba(0,0,0,0.5); border: none; cursor: pointer; }
+        .settings-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; flex-direction: column; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .settings-header { display: flex; justify-content: space-between; align-items: center; }
+        .settings-section { margin: 10px 0; }
+        .setting-row { display: flex; align-items: center; margin: 5px 0; }
+        .setting-row label { width: 120px; }
+        .settings-footer { display: flex; justify-content: space-around; }
+        .close-btn, .save-btn, .reset-btn, .back-btn { padding: 10px; background: green; border: none; cursor: pointer; }
+        #hud { position: absolute; top: 100px; left: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div id="tactile-zone">
+        <div id="btn-rpm" class="actuator" ontouchstart="startRPMBoost()" ontouchend="stopRPMBoost()" ontouchcancel="stopRPMBoost()">H</div>
+        <div id="btn-mute" class="actuator" ontouchstart="toggleMute()">©</div>
+        <div id="btn-cycle" class="actuator" ontouchstart="manualCycle()">∆</div>
+        <div id="btn-inject" class="actuator" ontouchstart="injectParticles()">§</div>
+        <div id="btn-master" class="actuator" ontouchstart="toggleMaster()">▶️</div>
+        <div id="btn-mode" class="actuator" ontouchstart="toggleMode()">AUTO</div>
+
+        <!-- HUD -->
+        <div id="hud">
+            <p id="hud-tick">TICK: 00000</p>
+            <p id="hud-spun">SPUN: 0K</p>
+            <p id="hud-loss">L©SS: 0K</p>
+            <p id="hud-active">ACTIVE: 0</p>
+            <p id="hud-cycle">CYCLE: 0</p>
+        </div>
+
+        <!-- SETTINGS OVERLAY -->
+        <div id="settings-panel" class="settings-overlay">
+            <div class="settings-header">
+                <span>⚙️ SULTAN CONFIG</span>
+                <button id="settings-close" class="close-btn">✕</button>
+            </div>
+
+            <!-- PRESETS SECTION -->
+            <div class="settings-section">
+                <h4>📦 PRESETS</h4>
+                <div class="setting-row">
+                    <label>Preset:</label>
+                    <select id="preset">
+                        <option value="default">Default</option>
+                        <option value="aggressive">Aggressive Pilot</option>
+                        <option value="cosmic">Cosmic Meditation</option>
+                        <option value="factory">Fusion Factory</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- COLORS SECTION -->
+            <div class="settings-section">
+                <h4>🎨 COLORS</h4>
+                <div class="setting-row">
+                    <label>Core:</label>
+                    <input type="color" id="core-color" value="#00ff00">
+                </div>
+                <div class="setting-row">
+                    <label>Mid Ring:</label>
+                    <input type="color" id="mid-color" value="#ff6600">
+                </div>
+                <div class="setting-row">
+                    <label>Outer Ring:</label>
+                    <input type="color" id="outer-color" value="#00ff00">
+                </div>
+                <div class="setting-row">
+                    <label>Glow:</label>
+                    <input type="color" id="glow-color" value="#00ff88">
+                </div>
+                <div class="setting-row">
+                    <label>HUD Magenta:</label>
+                    <input type="color" id="hud-magenta" value="#ff00ff">
+                </div>
+                <div class="setting-row">
+                    <label>HUD Yellow:</label>
+                    <input type="color" id="hud-yellow" value="#ffff00">
+                </div>
+                <div class="setting-row">
+                    <label>HUD Cyan:</label>
+                    <input type="color" id="hud-cyan" value="#00ffff">
+                </div>
+            </div>
+
+            <!-- BUTTONS SECTION -->
+            <div class="settings-section">
+                <h4>🔘 BUTTONS</h4>
+                <div class="setting-row">
+                    <label>Boost Glyph:</label>
+                    <input type="text" id="glyph-boost" value="H" maxlength="1">
+                    <label>Color:</label>
+                    <input type="color" id="color-boost" value="#ff6600">
+                </div>
+                <div class="setting-row">
+                    <label>Cycle Glyph:</label>
+                    <input type="text" id="glyph-cycle" value="∆" maxlength="1">
+                    <label>Color:</label>
+                    <input type="color" id="color-cycle" value="#00ff00">
+                </div>
+                <div class="setting-row">
+                    <label>Inject Glyph:</label>
+                    <input type="text" id="glyph-inject" value="§" maxlength="1">
+                    <label>Color:</label>
+                    <input type="color" id="color-inject" value="#ff00ff">
+                </div>
+                <div class="setting-row">
+                    <label>Mute Glyph:</label>
+                    <input type="text" id="glyph-mute" value="©" maxlength="1">
+                    <label>Color:</label>
+                    <input type="color" id="color-mute" value="#ffffff">
+                </div>
+                <div class="setting-row">
+                    <label>Master Glyph:</label>
+                    <input type="text" id="glyph-master" value="▶️" maxlength="2">
+                    <label>Color:</label>
+                    <input type="color" id="color-master" value="#00ffff">
+                </div>
+                <div class="setting-row">
+                    <label>Mode Glyph:</label>
+                    <input type="text" id="glyph-mode" value="AUTO" maxlength="4">
+                    <label>Color:</label>
+                    <input type="color" id="color-mode" value="#ffff00">
+                </div>
+            </div>
+
+            <!-- PHYSICS SECTION -->
+            <div class="settings-section">
+                <h4>⚛️ PHYSICS</h4>
+                <div class="setting-row">
+                    <label>Particles:</label>
+                    <input type="range" id="max-particles" min="500" max="5000" value="2500" step="500">
+                    <span id="particles-val">2500</span>
+                </div>
+                <div class="setting-row">
+                    <label>Gravity:</label>
+                    <input type="range" id="gravity-pull" min="0.5" max="2.0" value="1.2" step="0.1">
+                    <span id="gravity-val">1.2</span>
+                </div>
+            </div>
+
+            <!-- AUDIO SECTION -->
+            <div class="settings-section">
+                <h4>🎵 AUDIO</h4>
+                <div class="setting-row">
+                    <label>Mode:</label>
+                    <select id="audio-mode">
+                        <option value="default">Default</option>
+                        <option value="beethoven">Beethoven</option>
+                        <option value="celtic">Celtic</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Waveform:</label>
+                    <select id="waveform">
+                        <option value="triangle">Triangle</option>
+                        <option value="sine">Sine</option>
+                        <option value="sawtooth">Sawtooth</option>
+                        <option value="square">Square</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Vibrato Speed:</label>
+                    <input type="range" id="vibrato-speed" min="2" max="10" value="5.5" step="0.5">
+                    <span id="vibrato-val">5.5Hz</span>
+                </div>
+                <div class="setting-row">
+                    <label>Vibrato Depth:</label>
+                    <input type="range" id="vibrato-depth" min="5" max="50" value="10" step="5">
+                    <span id="vibrato-depth-val">10</span>
+                </div>
+                <div class="setting-row">
+                    <label>Noise Level:</label>
+                    <input type="range" id="noise-level" min="0.005" max="0.05" value="0.015" step="0.005">
+                    <span id="noise-val">0.015</span>
+                </div>
+                <div class="setting-row">
+                    <label>Stereo Width:</label>
+                    <input type="range" id="stereo-width" min="0" max="1" value="0.5" step="0.1">
+                    <span id="stereo-val">0.5</span>
+                </div>
+                <div class="setting-row">
+                    <label>Tone Interval (sec):</label>
+                    <input type="range" id="tone-interval" min="0" max="1" value="0" step="0.05">
+                    <span id="tone-interval-val">0 (random)</span>
+                </div>
+            </div>
+
+            <!-- HAPTICS SECTION -->
+            <div class="settings-section">
+                <h4>📳 HAPTICS</h4>
+                <div class="setting-row">
+                    <label>Pattern:</label>
+                    <select id="haptic-pattern">
+                        <option value="[10]">Light tick [10]</option>
+                        <option value="[20,10]">Double pulse [20,10]</option>
+                        <option value="[30]">Medium snap [30]</option>
+                        <option value="[40]">Fusion boom [40]</option>
+                        <option value="[50]">Heavy click [50]</option>
+                        <option value="[100]">Cycle complete [100]</option>
+                        <option value="[20,10,20]">Inject [20,10,20]</option>
+                        <option value="[50,20,50]">Mode switch [50,20,50]</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ANIMATION SECTION -->
+            <div class="settings-section">
+                <h4>🌀 ANIMATION SPEEDS</h4>
+                <div class="setting-row">
+                    <label>Core Divisor:</label>
+                    <input type="range" id="core-divisor" min="10000" max="100000" value="50000" step="10000">
+                    <span id="core-divisor-val">50000</span>
+                </div>
+                <div class="setting-row">
+                    <label>Mid Divisor:</label>
+                    <input type="range" id="mid-divisor" min="20000" max="200000" value="100000" step="20000">
+                    <span id="mid-divisor-val">100000</span>
+                </div>
+                <div class="setting-row">
+                    <label>Outer Divisor:</label>
+                    <input type="range" id="outer-divisor" min="500000" max="4000000" value="2000000" step="500000">
+                    <span id="outer-divisor-val">2000000</span>
+                </div>
+                <div class="setting-row">
+                    <label>Glow Divisor:</label>
+                    <input type="range" id="glow-divisor" min="500000" max="4000000" value="2000000" step="500000">
+                    <span id="glow-divisor-val">2000000</span>
+                </div>
+            </div>
+
+            <!-- CONTROLS -->
+            <div class="settings-footer">
+                <button id="settings-save" class="save-btn">💾 SAVE</button>
+                <button id="settings-reset" class="reset-btn">🔄 RESET</button>
+                <button id="settings-back" class="back-btn">← BACK</button>
+            </div>
+        </div>
+
+        <!-- SETTINGS TRIGGER BUTTON -->
+        <button id="settings-trigger" class="settings-tab">⚙️</button>
+    </div>
+
+    <script>
+        // Basic setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        camera.position.z = 5;
+
+        // Rings and glow
+        const coreGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+        const coreMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+        const core = new THREE.Mesh(coreGeometry, coreMaterial);
+        scene.add(core);
+
+        const midGeometry = new THREE.TorusGeometry(1.5, 0.1, 16, 100);
+        const midMaterial = new THREE.MeshBasicMaterial({ color: 0xff6600 });
+        const midRing = new THREE.Mesh(midGeometry, midMaterial);
+        scene.add(midRing);
+
+        const outerGeometry = new THREE.TorusGeometry(3, 0.05, 16, 100);
+        const outerMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 });
+        const outerRing = new THREE.Mesh(outerGeometry, outerMaterial);
+        scene.add(outerRing);
+
+        const glowGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+        const glowMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending });
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        scene.add(glow);
+
+        // Particles
+        let MAX_P = 2500;
+        const pData = new Array(MAX_P).fill(null).map(() => ({
+            r: Math.random() * 5 + 1,
+            a: Math.random() * Math.PI * 2,
+            L: 1,
+            active: false,
+            burst: 0,
+            color: [Math.random(), Math.random(), Math.random()]
+        }));
+
+        const posArr = new Float32Array(MAX_P * 3);
+        const colArr = new Float32Array(MAX_P * 3);
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+
+        const material = new THREE.PointsMaterial({ vertexColors: true, size: 0.05 });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        // Audio
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let isMuted = false;
+        let rpm = 0;
+        let maxRpm = 1000000;
+        let isBoosting = false;
+        let isPaused = false;
+        let mode = 'auto'; // auto or man
+        let audioMode = 'default'; // default, beethoven, celtic
+        const healingFreqs = [174, 285, 396, 417, 528, 639, 741, 852, 963]; // Extended solfeggio
+        let lastToneTime = 0;
+        let toneInterval = 0; // 0 for random
+
+        // Settings variables
+        let maxParticles = 2500;
+        let gravityPull = 1.2;
+        let waveform = 'triangle';
+        let vibratoSpeed = 5.5;
+        let vibratoDepth = 10;
+        let noiseLevel = 0.015;
+        let stereoWidth = 0.5;
+        let hapticPattern = [10];
+        let coreDivisor = 50000;
+        let midDivisor = 100000;
+        let outerDivisor = 2000000;
+        let glowDivisor = 2000000;
+        let coreColor = '#00ff00';
+        let midColor = '#ff6600';
+        let outerColor = '#00ff00';
+        let glowColor = '#00ff88';
+        let hudMagenta = '#ff00ff';
+        let hudYellow = '#ffff00';
+        let hudCyan = '#00ffff';
+        let injectAmount = 100;
+
+        // HUD variables
+        let tick = 0;
+        let loss = 0;
+        let cycles = 0;
+
+        // Log function
+        function log(msg, type) {
+            console.log(`[${type}] ${msg}`);
+        }
+
+        // Update particles
+        function updateParticles(delta) {
+            let activeCount = 0;
+            for (let i = 0; i < MAX_P; i++) {
+                if (pData[i].active && activeCount < maxParticles) {
+                    activeCount++;
+                    pData[i].a += delta * (rpm / 10000);
+                    pData[i].r -= gravityPull * delta * 0.1;
+                    if (pData[i].burst > 0) {
+                        pData[i].r += pData[i].burst * delta;
+                        pData[i].burst -= delta;
+                    }
+                    if (pData[i].r < 0.1) {
+                        pData[i].active = false;
+                        loss += 1; // Arbitrary mass loss
+                    } else if (pData[i].L <= 0) {
+                        pData[i].active = false;
+                    } else {
+                        pData[i].L -= delta * 0.01;
+                    }
+                    posArr[i * 3] = pData[i].r * Math.cos(pData[i].a);
+                    posArr[i * 3 + 1] = pData[i].r * Math.sin(pData[i].a);
+                    posArr[i * 3 + 2] = 0;
+                    colArr[i * 3] = pData[i].color[0];
+                    colArr[i * 3 + 1] = pData[i].color[1];
+                    colArr[i * 3 + 2] = pData[i].color[2];
+                } else {
+                    posArr[i * 3] = 0;
+                    posArr[i * 3 + 1] = 0;
+                    posArr[i * 3 + 2] = 0;
+                }
+            }
+            geometry.attributes.position.needsUpdate = true;
+            geometry.attributes.color.needsUpdate = true;
+            return activeCount;
+        }
+
+        // Play tone
+        function playTone(now = audioCtx.currentTime) {
+            if (isMuted || isPaused) return;
+
+            const duration = 0.8;
+            const osc = audioCtx.createOscillator();
+            osc.type = waveform;
+            const vibrato = audioCtx.createOscillator();
+            vibrato.type = 'sine';
+            vibrato.frequency.value = vibratoSpeed;
+            const vGain = audioCtx.createGain();
+            vGain.gain.value = vibratoDepth;
+            vibrato.connect(vGain);
+            vGain.connect(osc.detune);
+
+            const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.4, audioCtx.sampleRate);
+            const noiseData = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < noiseData.length; i++) {
+                noiseData[i] = Math.random() * 2 - 1;
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = noiseBuffer;
+
+            const panner = audioCtx.createStereoPanner();
+            const nGain = audioCtx.createGain();
+            const mGain = audioCtx.createGain();
+
+            osc.connect(panner);
+            panner.connect(mGain);
+            noise.connect(nGain);
+            mGain.connect(audioCtx.destination);
+            nGain.connect(audioCtx.destination);
+
+            nGain.gain.setValueAtTime(noiseLevel, now);
+            nGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+
+            mGain.gain.setValueAtTime(0, now);
+            mGain.gain.linearRampToValueAtTime(0.12, now + 0.04);
+            mGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+            let freq = (rpm > 900000) ? healingFreqs[Math.floor(Math.random() * 3) + 6] : (rpm > 400000) ? 528 : healingFreqs[Math.floor(Math.random() * 4)];
+
+            if (audioMode === 'beethoven') {
+                // G-G-G-Eb motif
+                osc.frequency.setValueAtTime(392, now); // G
+                osc.frequency.setValueAtTime(392, now + 0.15);
+                osc.frequency.setValueAtTime(392, now + 0.3);
+                osc.frequency.setValueAtTime(311, now + 0.45); // Eb longer
+                panner.pan.setValueAtTime(-1, now);
+                panner.pan.linearRampToValueAtTime(1, now + 1.2);
+                duration = 1.2;
+            } else if (audioMode === 'celtic') {
+                // More breath, woodwind-like
+                nGain.gain.setValueAtTime(noiseLevel * 2, now);
+                nGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+                freq = healingFreqs[Math.floor(rpm / 100000) % healingFreqs.length];
+            } else {
+                panner.pan.value = (Math.random() - 0.5) * stereoWidth;
+            }
+
+            osc.frequency.value = freq;
+
+            osc.start(now);
+            noise.start(now);
+            vibrato.start(now);
+
+            osc.stop(now + duration);
+            noise.stop(now + duration);
+            vibrato.stop(now + duration);
+        }
+
+        // Functions
+        function vibrateHaptic() {
+            if (navigator.vibrate) {
+                navigator.vibrate(hapticPattern);
+            }
+        }
+
+        function startRPMBoost() {
+            isBoosting = true;
+            vibrateHaptic();
+        }
+
+        function stopRPMBoost() {
+            isBoosting = false;
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            vibrateHaptic();
+        }
+
+        function manualCycle() {
+            playTone();
+            rpm += 10000;
+            cycles++;
+            vibrateHaptic();
+        }
+
+        function injectParticles() {
+            for (let j = 0; j < injectAmount / 100; j++) { // For bursts x10, etc.
+                for (let i = 0; i < 100; i++) {
+                    let idx = Math.floor(Math.random() * MAX_P);
+                    if (!pData[idx].active) {
+                        pData[idx].active = true;
+                        pData[idx].r = Math.random() * 5 + 1;
+                        pData[idx].a = Math.random() * Math.PI * 2;
+                        pData[idx].L = 1;
+                        pData[idx].burst = Math.random() * 2;
+                        pData[idx].color = [Math.random(), Math.random(), Math.random()];
+                        break;
+                    }
+                }
+            }
+            vibrateHaptic();
+        }
+
+        function toggleMaster() {
+            isPaused = !isPaused;
+            document.getElementById('btn-master').innerHTML = isPaused ? '▶️' : '⏸';
+            vibrateHaptic();
+        }
+
+        function toggleMode() {
+            mode = mode === 'auto' ? 'man' : 'auto';
+            document.getElementById('btn-mode').innerHTML = mode.toUpperCase();
+            vibrateHaptic();
+        }
+
+        // Animate
+        let lastTime = 0;
+        function animate(time = 0) {
+            if (isPaused) {
+                requestAnimationFrame(animate);
+                return;
+            }
+            requestAnimationFrame(animate);
+            const delta = (time - lastTime) / 1000;
+            lastTime = time;
+
+            tick += delta;
+
+            if (mode === 'auto') {
+                rpm += 500 * delta;
+            }
+            if (isBoosting) {
+                rpm += 1000 * delta;
+            }
+            if (rpm > maxRpm) rpm = maxRpm;
+            if (!isBoosting && mode !== 'auto' && rpm > 0) {
+                rpm -= 500 * delta;
+                if (rpm < 0) rpm = 0;
+            }
+
+            const activeCount = updateParticles(delta);
+
+            // Rotate rings
+            core.rotation.z += delta * (rpm / coreDivisor);
+            midRing.rotation.z += delta * (rpm / midDivisor);
+            outerRing.rotation.z += delta * (rpm / outerDivisor);
+
+            // Glow pulse
+            const pulse = Math.sin(time * (rpm / glowDivisor) / 1000) * 0.2;
+            glow.scale.set(1 + pulse, 1 + pulse, 1 + pulse);
+
+            // Tone trigger
+            if (toneInterval > 0) {
+                if (time - lastToneTime > toneInterval * 1000) {
+                    if (rpm > 1000) playTone();
+                    lastToneTime = time;
+                }
+            } else {
+                if (Math.random() < 0.01 * (rpm / 100000)) {
+                    playTone();
+                }
+            }
+
+            // Update HUD
+            document.getElementById('hud-tick').innerHTML = `TICK: ${Math.floor(tick * 1000).toString().padStart(5, '0')}`;
+            document.getElementById('hud-spun').innerHTML = `SPUN: ${(rpm / 1000).toFixed(0)}K`;
+            document.getElementById('hud-loss').innerHTML = `L©SS: ${(loss / 1000).toFixed(0)}K`;
+            document.getElementById('hud-active').innerHTML = `ACTIVE: ${activeCount}`;
+            document.getElementById('hud-cycle').innerHTML = `CYCLE: ${cycles}`;
+
+            renderer.render(scene, camera);
+        }
+
+        // Presets
+        const presets = {
+            default: {
+                maxRpm: 1000000,
+                gravityPull: 1.2,
+                maxParticles: 2500,
+                waveform: 'triangle',
+                vibratoSpeed: 5.5,
+                vibratoDepth: 10,
+                noiseLevel: 0.015,
+                stereoWidth: 0.5,
+                toneInterval: 0,
+                hapticPattern: [10],
+                coreDivisor: 50000,
+                midDivisor: 100000,
+                outerDivisor: 2000000,
+                glowDivisor: 2000000,
+                coreColor: '#00ff00',
+                midColor: '#ff6600',
+                outerColor: '#00ff00',
+                glowColor: '#00ff88',
+                hudMagenta: '#ff00ff',
+                hudYellow: '#ffff00',
+                hudCyan: '#00ffff',
+                audioMode: 'default',
+                injectAmount: 100
+            },
+            aggressive: {
+                maxRpm: 750000,
+                gravityPull: 2.0,
+                maxParticles: 2500,
+                waveform: 'sawtooth',
+                vibratoSpeed: 8,
+                vibratoDepth: 20,
+                noiseLevel: 0.025,
+                stereoWidth: 0.8,
+                toneInterval: 0,
+                hapticPattern: [50],
+                coreDivisor: 10000,
+                midDivisor: 20000,
+                outerDivisor: 500000,
+                glowDivisor: 500000,
+                coreColor: '#ff6600',
+                midColor: '#ff0000',
+                outerColor: '#ff4500',
+                glowColor: '#ff0000',
+                hudMagenta: '#ff00ff',
+                hudYellow: '#ffff00',
+                hudCyan: '#00ffff',
+                audioMode: 'default',
+                injectAmount: 100
+            },
+            cosmic: {
+                maxRpm: 500000,
+                gravityPull: 0.5,
+                maxParticles: 3000,
+                waveform: 'sine',
+                vibratoSpeed: 3,
+                vibratoDepth: 5,
+                noiseLevel: 0.01,
+                stereoWidth: 1.0,
+                toneInterval: 0.25,
+                hapticPattern: [10],
+                coreDivisor: 100000,
+                midDivisor: 200000,
+                outerDivisor: 4000000,
+                glowDivisor: 4000000,
+                coreColor: '#0000ff',
+                midColor: '#800080',
+                outerColor: '#4b0082',
+                glowColor: '#ffd700',
+                hudMagenta: '#ff00ff',
+                hudYellow: '#ffff00',
+                hudCyan: '#00ffff',
+                audioMode: 'celtic',
+                injectAmount: 200
+            },
+            factory: {
+                maxRpm: 1200000,
+                gravityPull: 1.5,
+                maxParticles: 5000,
+                waveform: 'square',
+                vibratoSpeed: 6,
+                vibratoDepth: 30,
+                noiseLevel: 0.035,
+                stereoWidth: 0.6,
+                toneInterval: 0,
+                hapticPattern: [40],
+                coreDivisor: 30000,
+                midDivisor: 60000,
+                outerDivisor: 1000000,
+                glowDivisor: 1000000,
+                coreColor: '#ffff00',
+                midColor: '#808080',
+                outerColor: '#a9a9a9',
+                glowColor: '#ffffe0',
+                hudMagenta: '#ff00ff',
+                hudYellow: '#ffff00',
+                hudCyan: '#00ffff',
+                audioMode: 'default',
+                injectAmount: 1000
+            }
+        };
+
+        // Settings event listeners
+        const settingsPanel = document.getElementById('settings-panel');
+        document.getElementById('settings-trigger').addEventListener('click', () => {
+            settingsPanel.style.display = 'flex';
+        });
+        document.getElementById('settings-close').addEventListener('click', () => {
+            settingsPanel.style.display = 'none';
+        });
+        document.getElementById('settings-back').addEventListener('click', () => {
+            settingsPanel.style.display = 'none';
+        });
+
+        // Preset change
+        document.getElementById('preset').addEventListener('change', (e) => {
+            const preset = presets[e.target.value];
+            if (preset) {
+                maxRpm = preset.maxRpm;
+                gravityPull = preset.gravityPull;
+                maxParticles = preset.maxParticles;
+                waveform = preset.waveform;
+                vibratoSpeed = preset.vibratoSpeed;
+                vibratoDepth = preset.vibratoDepth;
+                noiseLevel = preset.noiseLevel;
+                stereoWidth = preset.stereoWidth;
+                toneInterval = preset.toneInterval;
+                hapticPattern = preset.hapticPattern;
+                coreDivisor = preset.coreDivisor;
+                midDivisor = preset.midDivisor;
+                outerDivisor = preset.outerDivisor;
+                glowDivisor = preset.glowDivisor;
+                coreColor = preset.coreColor;
+                midColor = preset.midColor;
+                outerColor = preset.outerColor;
+                glowColor = preset.glowColor;
+                hudMagenta = preset.hudMagenta;
+                hudYellow = preset.hudYellow;
+                hudCyan = preset.hudCyan;
+                audioMode = preset.audioMode;
+                injectAmount = preset.injectAmount;
+
+                // Update UI
+                document.getElementById('max-particles').value = maxParticles;
+                document.getElementById('particles-val').textContent = maxParticles;
+                document.getElementById('gravity-pull').value = gravityPull;
+                document.getElementById('gravity-val').textContent = gravityPull;
+                document.getElementById('waveform').value = waveform;
+                document.getElementById('vibrato-speed').value = vibratoSpeed;
+                document.getElementById('vibrato-val').textContent = `${vibratoSpeed}Hz`;
+                document.getElementById('vibrato-depth').value = vibratoDepth;
+                document.getElementById('vibrato-depth-val').textContent = vibratoDepth;
+                document.getElementById('noise-level').value = noiseLevel;
+                document.getElementById('noise-val').textContent = noiseLevel;
+                document.getElementById('stereo-width').value = stereoWidth;
+                document.getElementById('stereo-val').textContent = stereoWidth;
+                document.getElementById('tone-interval').value = toneInterval;
+                document.getElementById('tone-interval-val').textContent = toneInterval === 0 ? '0 (random)' : toneInterval;
+                document.getElementById('haptic-pattern').value = `[${hapticPattern.join(',')}]`;
+                document.getElementById('core-divisor').value = coreDivisor;
+                document.getElementById('core-divisor-val').textContent = coreDivisor;
+                document.getElementById('mid-divisor').value = midDivisor;
+                document.getElementById('mid-divisor-val').textContent = midDivisor;
+                document.getElementById('outer-divisor').value = outerDivisor;
+                document.getElementById('outer-divisor-val').textContent = outerDivisor;
+                document.getElementById('glow-divisor').value = glowDivisor;
+                document.getElementById('glow-divisor-val').textContent = glowDivisor;
+                document.getElementById('core-color').value = coreColor;
+                document.getElementById('mid-color').value = midColor;
+                document.getElementById('outer-color').value = outerColor;
+                document.getElementById('glow-color').value = glowColor;
+                document.getElementById('hud-magenta').value = hudMagenta;
+                document.getElementById('hud-yellow').value = hudYellow;
+                document.getElementById('hud-cyan').value = hudCyan;
+                document.getElementById('audio-mode').value = audioMode;
+
+                applyColors();
+            }
+        });
+
+        // Update values on change
+        document.getElementById('max-particles').addEventListener('input', (e) => {
+            maxParticles = parseInt(e.target.value);
+            document.getElementById('particles-val').textContent = maxParticles;
+        });
+        document.getElementById('gravity-pull').addEventListener('input', (e) => {
+            gravityPull = parseFloat(e.target.value);
+            document.getElementById('gravity-val').textContent = gravityPull;
+        });
+        document.getElementById('audio-mode').addEventListener('change', (e) => {
+            audioMode = e.target.value;
+        });
+        document.getElementById('waveform').addEventListener('change', (e) => {
+            waveform = e.target.value;
+        });
+        document.getElementById('vibrato-speed').addEventListener('input', (e) => {
+            vibratoSpeed = parseFloat(e.target.value);
+            document.getElementById('vibrato-val').textContent = `${vibratoSpeed}Hz`;
+        });
+        document.getElementById('vibrato-depth').addEventListener('input', (e) => {
+            vibratoDepth = parseInt(e.target.value);
+            document.getElementById('vibrato-depth-val').textContent = vibratoDepth;
+        });
+        document.getElementById('noise-level').addEventListener('input', (e) => {
+            noiseLevel = parseFloat(e.target.value);
+            document.getElementById('noise-val').textContent = noiseLevel;
+        });
+        document.getElementById('stereo-width').addEventListener('input', (e) => {
+            stereoWidth = parseFloat(e.target.value);
+            document.getElementById('stereo-val').textContent = stereoWidth;
+        });
+        document.getElementById('tone-interval').addEventListener('input', (e) => {
+            toneInterval = parseFloat(e.target.value);
+            document.getElementById('tone-interval-val').textContent = toneInterval === 0 ? '0 (random)' : toneInterval;
+        });
+        document.getElementById('haptic-pattern').addEventListener('change', (e) => {
+            hapticPattern = JSON.parse(e.target.value);
+        });
+        document.getElementById('core-divisor').addEventListener('input', (e) => {
+            coreDivisor = parseInt(e.target.value);
+            document.getElementById('core-divisor-val').textContent = coreDivisor;
+        });
+        document.getElementById('mid-divisor').addEventListener('input', (e) => {
+            midDivisor = parseInt(e.target.value);
+            document.getElementById('mid-divisor-val').textContent = midDivisor;
+        });
+        document.getElementById('outer-divisor').addEventListener('input', (e) => {
+            outerDivisor = parseInt(e.target.value);
+            document.getElementById('outer-divisor-val').textContent = outerDivisor;
+        });
+        document.getElementById('glow-divisor').addEventListener('input', (e) => {
+            glowDivisor = parseInt(e.target.value);
+            document.getElementById('glow-divisor-val').textContent = glowDivisor;
+        });
+
+        // Color changes
+        function applyColors() {
+            coreMaterial.color.setHex(parseInt(coreColor.slice(1), 16));
+            midMaterial.color.setHex(parseInt(midColor.slice(1), 16));
+            outerMaterial.color.setHex(parseInt(outerColor.slice(1), 16));
+            glowMaterial.color.setHex(parseInt(glowColor.slice(1), 16));
+            // HUD colors example
+            document.getElementById('hud-spun').style.color = hudMagenta;
+            document.getElementById('hud-loss').style.color = hudYellow;
+            document.getElementById('hud-active').style.color = hudCyan;
+            // Button colors
+            document.getElementById('btn-rpm').style.background = document.getElementById('color-boost').value + '33';
+            document.getElementById('btn-cycle').style.background = document.getElementById('color-cycle').value + '33';
+            document.getElementById('btn-inject').style.background = document.getElementById('color-inject').value + '33';
+            document.getElementById('btn-mute').style.background = document.getElementById('color-mute').value + '33';
+            document.getElementById('btn-master').style.background = document.getElementById('color-master').value + '33';
+            document.getElementById('btn-mode').style.background = document.getElementById('color-mode').value + '33';
+        }
+
+        document.getElementById('core-color').addEventListener('input', (e) => { coreColor = e.target.value; applyColors(); });
+        document.getElementById('mid-color').addEventListener('input', (e) => { midColor = e.target.value; applyColors(); });
+        document.getElementById('outer-color').addEventListener('input', (e) => { outerColor = e.target.value; applyColors(); });
+        document.getElementById('glow-color').addEventListener('input', (e) => { glowColor = e.target.value; applyColors(); });
+        document.getElementById('hud-magenta').addEventListener('input', (e) => { hudMagenta = e.target.value; applyColors(); });
+        document.getElementById('hud-yellow').addEventListener('input', (e) => { hudYellow = e.target.value; applyColors(); });
+        document.getElementById('hud-cyan').addEventListener('input', (e) => { hudCyan = e.target.value; applyColors(); });
+
+        // Button glyphs and colors
+        document.getElementById('glyph-boost').addEventListener('input', (e) => { document.getElementById('btn-rpm').innerHTML = e.target.value; });
+        document.getElementById('color-boost').addEventListener('input', (e) => { document.getElementById('btn-rpm').style.background = e.target.value + '33'; });
+        document.getElementById('glyph-cycle').addEventListener('input', (e) => { document.getElementById('btn-cycle').innerHTML = e.target.value; });
+        document.getElementById('color-cycle').addEventListener('input', (e) => { document.getElementById('btn-cycle').style.background = e.target.value + '33'; });
+        document.getElementById('glyph-inject').addEventListener('input', (e) => { document.getElementById('btn-inject').innerHTML = e.target.value; });
+        document.getElementById('color-inject').addEventListener('input', (e) => { document.getElementById('btn-inject').style.background = e.target.value + '33'; });
+        document.getElementById('glyph-mute').addEventListener('input', (e) => { document.getElementById('btn-mute').innerHTML = e.target.value; });
+        document.getElementById('color-mute').addEventListener('input', (e) => { document.getElementById('btn-mute').style.background = e.target.value + '33'; });
+        document.getElementById('glyph-master').addEventListener('input', (e) => { document.getElementById('btn-master').innerHTML = e.target.value; });
+        document.getElementById('color-master').addEventListener('input', (e) => { document.getElementById('btn-master').style.background = e.target.value + '33'; });
+        document.getElementById('glyph-mode').addEventListener('input', (e) => { document.getElementById('btn-mode').innerHTML = e.target.value; });
+        document.getElementById('color-mode').addEventListener('input', (e) => { document.getElementById('btn-mode').style.background = e.target.value + '33'; });
+
+        // Save and reset
+        document.getElementById('settings-save').addEventListener('click', () => {
+            const config = {
+                maxParticles, gravityPull, waveform, vibratoSpeed, vibratoDepth, noiseLevel, stereoWidth, toneInterval,
+                hapticPattern, coreDivisor, midDivisor, outerDivisor, glowDivisor,
+                coreColor, midColor, outerColor, glowColor, hudMagenta, hudYellow, hudCyan, audioMode,
+                // Add glyphs and button colors if needed
+            };
+            localStorage.setItem('sultan-config', JSON.stringify(config));
+        });
+        document.getElementById('settings-reset').addEventListener('click', () => {
+            const preset = presets.default;
+            Object.assign(window, preset); // Simplified
+            // Update all UI elements as in preset change
+            // ...
+            applyColors();
+        });
+
+        // Load config
+        const savedConfig = localStorage.getItem('sultan-config');
+        if (savedConfig) {
+            const config = JSON.parse(savedConfig);
+            Object.assign(window, config);
+            // Update UI
+            // ...
+        }
+
+        // Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        log("SULTAN_SOVEREIGN_1.6.2 ONLINE", "milestone");
+        animate();
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(err => console.error('Service Worker registration failed:', err));
+        }
+    </script>
+</body>
+</html>
