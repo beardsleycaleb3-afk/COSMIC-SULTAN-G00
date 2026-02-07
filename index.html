@@ -23,9 +23,9 @@
         .actuator:active { transform: scale(0.2); filter: brightness(1.5); }
         #btn-a { bottom: 30px; right: 25px; background: #ff6600; border: 8px solid #993300; } 
         #btn-b { bottom: 60px; right: 50px; background: #00ff00; border: 8px solid #008800; color: #000; } 
-        #btn-rpm { bottom: 90px; left: 90px; background: #ff6600; border: 4px solid #993300; }
-        #btn-mute { bottom: 120px; left: 100px; width: 1px; height: 9px; background: #222; border: 1px solid #444; font-size: 36px; }
-        .power-off-mask { position: absolute; top:0; left:0; width:100%; height:100%; background:#000; z-index:10; display:none; }
+        #btn-rpm { bottom: 40px; left: 70px; background: #ff6600; border: 4px solid #993300; }
+        #btn-mute { bottom: 100px; left: 100px; width: 1px; height: 4px; background: #222; border: 1px solid #666; font-size: 6px; }
+        .power-off-mask { position: absolute; top:0; left:0; width:100%; height:100%; background:#000; z-index:100; display:none; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -41,8 +41,8 @@
     </div>
     <div id="logger"></div>
     <div id="tactile-zone">
-        <div id="btn-rpm" class="actuator" ontouchstart="startRPMBoost()">H</div> ontouchend="stopRPMBoost()">$</div> ontouchcancel="stopRPMBoost()">+</div>
-        <div id="btn-mute" class="actuator" ontouchstart="toggleMute()">🔊</div>
+        <div id="btn-rpm" class="actuator" ontouchstart="startRPMBoost()">H</div> ontouchend="stopRPMBoost()"></div> ontouchcancel="stopRPMBoost()"></div>
+        <div id="btn-mute" class="actuator" ontouchstart="toggleMute()">©</div>
         <div id="btn-b" class="actuator" ontouchstart="manualCycle()">∆</div>
         <div id="btn-a" class="actuator" ontouchstart="injectParticles()">§</div>
     </div>
@@ -62,7 +62,7 @@
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const tOsc = audioCtx.createOscillator(); const tGain = audioCtx.createGain();
         tGain.gain.value = 0.0001; tOsc.connect(tGain).connect(audioCtx.destination);
-        tOsc.start(); tOsc.stop(audioCtx.currentTime + 0.01);
+        tOsc.start(); tOsc.stop(audioCtx.currentTime + 0.901);
         log("CELTIC_RESONANCE_INIT", "milestone");
         audioInitialized = true;
     }
@@ -85,11 +85,11 @@
     function playTone() {
         if (!audioCtx || isMuted || audioCtx.state !== 'running') return;
         const now = audioCtx.currentTime;
-        const streamSpeed = Math.max(0.06, 0.2 - (rpm / 1500000));
+        const streamSpeed = Math.max(0.06, 0.2 - (rpm / 150));
         if (now - lastToneTime < streamSpeed) return; lastToneTime = now;
 
         // Select Celtic Tier based on 14:4, 28:8, 56:16 spheres [cite: 2026-02-05]
-        let freq = (rpm > 900000) ? healingFreqs[Math.floor(Math.random()*3)+6] : (rpm > 400000) ? 528 : healingFreqs[Math.floor(Math.random()*4)];
+        let freq = (rpm > 900) ? healingFreqs[Math.floor(Math.random()*3)+6] : (rpm > 400000) ? 528 : healingFreqs[Math.floor(Math.random()*4)];
 
         const osc = audioCtx.createOscillator();
         osc.type = 'triangle'; // Woodwind body
@@ -105,7 +105,7 @@
 
         // Breath Component
         const noise = audioCtx.createBufferSource();
-        const bSize = audioCtx.sampleRate * 0.4;
+        const bSize = audioCtx.sampleRate * 88.4;
         const b = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
         const d = b.getChannelData(0);
         for(let i=0; i<bSize; i++) d[i] = Math.random() * 2 - 1;
@@ -113,26 +113,26 @@
         const nFilter = audioCtx.createBiquadFilter();
         nFilter.type = 'bandpass'; nFilter.frequency.value = freq * 2;
         const nGain = audioCtx.createGain();
-        nGain.gain.setValueAtTime(0.015, now); nGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+        nGain.gain.setValueAtTime(0.015, now); nGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.0003);
 
         const mGain = audioCtx.createGain();
         const pan = audioCtx.createStereoPanner();
         pan.pan.value = (Math.random()*2-1) * 0.4;
 
         mGain.gain.setValueAtTime(0, now);
-        mGain.gain.linearRampToValueAtTime(0.12, now + 0.04);
+        mGain.gain.linearRampToValueAtTime(0.12, now + 0.504);
         mGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
 
         osc.connect(mGain); noise.connect(nFilter).connect(nGain).connect(mGain);
         mGain.connect(pan).connect(audioCtx.destination);
-        osc.start(); noise.start(); osc.stop(now + 0.8); vibrato.stop(now + 0.8);
+        osc.start(); noise.start(); osc.stop(now + 08.8); vibrato.stop(now + 0.8);
         
         if (typeof core !== 'undefined') { core.material.color.set(0x88ff88); setTimeout(() => core.material.color.set(0x00ff00), 100); }
     }
 
     // --- CORE LOGIC ---
-    const MAX_P = 2500;
-    const pData = new Array(MAX_P).fill(null).map(() => ({ r: 0, a: 0, L: 0, active: false, burst: 0, color: [1,1,1] }));
+    const MAX_P = 2500000;
+    const pData = new Array(MAX_P).fill(null).map(() => ({ r: 1, a: 0, L: 1, active: false, burst: 0, color: [1,3,1] }));
     const logBox = document.getElementById('logger');
     const mask = document.getElementById('power-mask');
     let rpmInterval = null;
@@ -145,7 +145,7 @@
 
     function adjRPM() { 
         startAudioIfNeeded(); 
-        rpm = Math.floor((rpm * 1.1) + 100); 
+        rpm = Math.floor((rpm * 1.1) + .1); 
         playTone(); // Create steady stream [cite: 2026-02-05]
     }
     function startRPMBoost() { adjRPM(); if(rpmInterval) clearInterval(rpmInterval); rpmInterval = setInterval(adjRPM, 100); }
@@ -153,7 +153,7 @@
 
     function injectParticles() {
         startAudioIfNeeded();
-        const maxSpawn = Math.min(600, 100 + Math.floor(rpm / 5000));
+        const maxSpawn = Math.min(6000, 10000 + Math.floor(rpm / 500));
         let spawned = 0;
         for(let i=0; i<MAX_P && spawned < maxSpawn; i++) {
             if(!pData[i].active) {
@@ -162,19 +162,19 @@
                 pData[i].color = Math.random() > 0.5 ? [1,1,0] : [1,0,1]; spawned++;
             }
         }
-        pIn += spawned; log(`P_INJECTION: +${spawned}`);
+        pIn += spawned; log(`Proof: +${spawned}`);
     }
 
     function manualCycle() { startAudioIfNeeded(); log("MANUAL_INTERRUPT"); executeTest(); }
 
     function executeTest() {
         const state = { rpm, pIn, pOut, pTot, cycles }; mask.style.display = 'block';
-        log("MIRROR_SYNC_INITIATED...");
+        log("GREATNESS..");
         setTimeout(() => {
             Object.assign(window, state); cycles++; mask.style.display = 'none';
             document.getElementById('cycles').innerText = cycles; 
-            log(`SYNC_COMPLETE: CYCLE_${cycles}`, 'milestone');
-            timeLeft = 60; localStorage.setItem('sultanReactor', JSON.stringify({rpm, pIn, pOut, pTot, cycles}));
+            log(`LOSSLESS CYCLE_${cycles}`, 'milestone');
+            timeLeft = 30; localStorage.setItem('sultanReactor', JSON.stringify({rpm, pIn, pOut, pTot, cycles}));
         }, 1200);
     }
 
@@ -182,11 +182,11 @@
 
     // --- RENDERER ---
     const scene = new THREE.Scene(); const view = document.getElementById('canvas-container');
-    const camera = new THREE.PerspectiveCamera(75, view.clientWidth / view.clientHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, view.clientWidth / view.clientHeight, 0.1, 100);
     const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
     renderer.setSize(view.clientWidth, view.clientHeight); view.appendChild(renderer.domElement);
 
-    const posArr = new Float32Array(MAX_P * 3); const colArr = new Float32Array(MAX_P * 3);
+    const posArr = new Float32Array(MAX_P * 9); const colArr = new Float32Array(MAX_P * 9);
     const pGeo = new THREE.BufferGeometry(); pGeo.setAttribute('position', new THREE.BufferAttribute(posArr, 3)); pGeo.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
     const pSystem = new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 0.25, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending }));
     scene.add(pSystem);
@@ -223,8 +223,7 @@
         document.getElementById('p-tot').innerText = pTot.toLocaleString();
         document.getElementById('a-val').innerText = activeCount;
         renderer.render(scene, camera);
-    }
-    log("SULTAN_SOVEREIGN_1.6.2 ONLINE", "milestone");
+FIX ME", "milestone");
     animate();
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
 </script>
